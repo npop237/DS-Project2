@@ -4,6 +4,12 @@ from sqlalchemy import create_engine
 
 
 def load_data(messages_filepath, categories_filepath):
+    """
+    Loads the Disaster response data from csv
+    :param messages_filepath: filepath for the raw messages - 2nd argument in command line to run the file
+    :param categories_filepath: filepath for the categories - 3rd argument in command line to run the file
+    :return: merged dataframe of the messages and categories
+    """
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
     df = messages.merge(categories, left_on='id', right_on='id')
@@ -12,6 +18,11 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
+    """
+    Cleans the data by splitting categories into individual columns ready for modelling
+    :param df: merged dataframe of messages and categories
+    :return: cleaned dataframe ready for modelling
+    """
     categories = df['categories'].str.split(';', expand=True)
     row = categories.iloc[1]
     category_colnames = list(row.apply(lambda x: x[:-2]))
@@ -31,6 +42,12 @@ def clean_data(df):
 
 
 def save_data(df, database_filename):
+    """
+    Creates a SQL database for the clean data
+    :param df: cleaned messages data
+    :param database_filename: 4th argument in the command line when running the file
+    :return: nothing
+    """
     engine = create_engine('sqlite:///{}'.format(database_filename))
     engine.text_factory = str
     df.to_sql('Messages_Categories', engine, index=False)
