@@ -1,24 +1,75 @@
 import sys
-
+import pandas as pd
+import numpy as np
+import nltk
+import pickle
+import re
+from sqlalchemy import create_engine
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+from sklearn.model_selection import GridSearchCV
+nltk.download(['punkt', 'wordnet'])
 
 def load_data(database_filepath):
-    pass
+    # load data from database
+    engine = create_engine('sqlite:///{}'.format(database_filepath))
+    df = pd.read_sql_table(table_name='Messages_Categories', con=engine)
+    # Drop null values from df
+    df.dropna(inplace=True)
+    # Split into x and Y
+    X = df['message']
+    Y = df.drop(columns=['id', 'original', 'genre', 'message'])
+    categories = Y.columns
+
+    return X, Y, categories
 
 
 def tokenize(text):
-    pass
+    tokens = word_tokenize(text)
+    lemmatizer = WordNetLemmatizer()
+
+    lem_tokens = []
+    for token in tokens:
+        new_token = lemmatizer.lemmatize(token).lower().strip()
+        lem_tokens.append(new_token)
+
+    return lem_tokens
 
 
 def build_model():
-    pass
+    pipeline = Pipeline([
+        ('text_pipeline', Pipeline([
+            ('vect', CountVectorizer(tokenizer=tokenize)),
+            ('tfidf', TfidfTransformer())
+        ])),
+        ('clf', MultiOutputClassifier(KNeighborsClassifier()))
+    ])
+
+    parameters = {
+        'text_pipeline__tfidf__use_idf': (True, False),
+        'clf__estimator__weights': ['uniform', 'distance']
+    }
+
+    cv = GridSearchCV(pipeline, param_grid=parameters, verbose=5, cv=2)
+
+    return cv
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    pass
+    Y_pred = model.predict(X_test)
+    for i, x in enumerate(category_names):
+        print(x)
+        print(classification_report(Y_test.values[i], Y_pred[i], target_names=["0", "1"]))
 
 
 def save_model(model, model_filepath):
-    pass
+    pickle.dump(model, open(model_filepath, 'wb'))
 
 
 def main():
