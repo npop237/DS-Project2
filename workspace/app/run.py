@@ -39,12 +39,24 @@ model = joblib.load("../models/classifier.pkl")
 def index():
     
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
+    # Visual 1 - Distribution of messages across the three genres
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
-    
+
+    # Visual 2 - Messages in each category
+    categories = df.drop(['id','message','original','genre'], axis=1)
+    categories.dropna(inplace=True)
+    category_totals = categories.sum(axis=0)
+
+    # Visual 3 - Seeing what types of Weather issue cause a food shortage as well
+    food_weather_cols = ['food','floods','storm','fire','earthquake','cold','other_weather']
+    food_categories = df[food_weather_cols]
+    food_related = food_categories[food_categories['food']==1.0]
+    weather_totals = food_related.sum(axis=0)
+    food_total = weather_totals.pop('food')
+    weather_percentages = weather_totals*100/food_total
+
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
         {
             'data': [
@@ -61,6 +73,44 @@ def index():
                 },
                 'xaxis': {
                     'title': "Genre"
+                }
+            }
+        },
+
+        {
+            'data': [
+                Bar(
+                    x=category_totals.index,
+                    y=category_totals.values
+                )
+            ],
+
+            'layout': {
+                'title': 'Messages in each category',
+                'yaxis': {
+                    'title': "Number of Messages"
+                },
+                'xaxis': {
+                    'title': "Category"
+                }
+            }
+        },
+
+        {
+            'data': [
+                Bar(
+                    x=weather_percentages.index,
+                    y=weather_percentages.values
+                )
+            ],
+
+            'layout': {
+                'title': 'Proportion of food issues caused by different weather types',
+                'yaxis': {
+                    'title': "Percentage"
+                },
+                'xaxis': {
+                    'title': "Weather Issue"
                 }
             }
         }
