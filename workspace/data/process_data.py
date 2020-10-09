@@ -31,7 +31,7 @@ def clean_data(df):
 
 
 def save_data(df, database_filename):
-    engine = create_engine('sqlite://{}'.format(database_filename))
+    engine = create_engine('sqlite:///{}'.format(database_filename))
     engine.text_factory = str
     df.to_sql('Messages_Categories', engine, index=False)
 

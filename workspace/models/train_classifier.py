@@ -56,7 +56,7 @@ def build_model():
         'clf__estimator__weights': ['uniform', 'distance']
     }
 
-    cv = GridSearchCV(pipeline, param_grid=parameters, verbose=5, cv=2)
+    cv = GridSearchCV(pipeline, param_grid=parameters, verbose=5)
 
     return cv
 
